@@ -1,0 +1,13 @@
+media;code;langage;country;description
+AG_AFP;AFPR;en;France;AFP general news wire in English from Agence France Press, an international news agency providing timely, comprehensive general and business news. Excludes urgents and advisories. Country of origin: France
+AG_Reuters;LBA;en;U.K.;Global news from Reuters covering all leading business, political and general news. Includes content from Reuters EU Highlights as of February 2019. Country of origin: United Kingdom
+AG_Tass;TASSRU;ru;Russia;Comprehensive news from Russia, the CIS region, and abroad. Formerly known as TASS World Service. Country of origin: Russia
+EU_Guardi;GRDN;en;U.K.;UK national newspaper covering world affairs, politics, economics and business, with a particular interest in social issues. From January 2015 this source will contain both print and online content. Country of origin: United Kingdom
+EU_Stampa;STMA;it;Italia;Leading Italian daily newspaper covering politics, international affairs, company news and sport Country of origin: Italy
+EU_Suddeu;SDDZ;de;Germany;Munich-based daily national German newspaper with a focus on Bavaria and southern Germany. Süddeutsche Zeitung reports daily on politics, economics, science and culture.  Country of origin: Germany
+SO_Folha;FOLHA;pt;Brazil;Sao Paulo-based daily newspaper including a strong business section. Country of origin: Brazil
+SO_Strait;NSTRAT;en;Indonesia;New Straits Times provides news coverage of finance, trade, economics, culture, politics and sports. Country of origin: Malaysia
+SO_Tindia;TOI;en;India;The Times of India covers business, economic, political and general news. Country of origin: India
+US_Nytime;NYTF;en;USA;A major daily known world-wide for its in-depth news coverage. Articles are from the final New York City edition. Includes the News York Times Magazine section. Country of origin: United States
+US_Today;USAT;en;USA;Daily national newspaper known for its concise stories, sports and weather coverage. Covers regional, national and world news. East Coast Final Edition. Country of origin: United States
+US_Wapost;WP;en;USA;Coverage of national, international, and local news.  The Washington Post is the largest newspaper in Washington, D.C. and also one of the capital’s oldest, having been founded in 1877. Country of origin: United States

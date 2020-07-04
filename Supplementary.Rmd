@@ -1,0 +1,290 @@
+---
+title: Historical focusing events in perspective - The impact of 2001 terror attacks
+  and 2020 pandemic on press agenda
+author: "<Anonymized>"
+date: "01/07/2020"
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    df_print: paged
+subtitle: Supplementary Material
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE, echo=TRUE, error=FALSE}
+knitr::opts_chunk$set(include = TRUE, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+list.files()
+```
+
+# COMPARISON OF SEPT.11 AND COVID-19 IMPACTS ON MEDIA AGENDA 
+
+In this section we will focus on the data collected through the Factiva database in order to compare the relative salience of the terror attacks of Sept. 11 and the crisis of the Covid-19. 
+
+
+## Data collection
+
+The answer to the  research question implies the collection of a sample of press release comparable in 2001 and 2020 which limits dramatically the choice of the candidates. On the basis of Factiva database, we have established a panel of 12 sources divided in four types : three daily newspapers from the US, three European newspapers located in different countries with different languages, three newspapers located in major emerging countries and three press agencies delivering global news
+
+
+```{r meta,include = TRUE, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+meta<-read.table(file = "factiva_terror_2001_meta.csv",
+         quote = '"',
+         header=T,
+         sep=";",
+         encoding="UTF-8")
+
+meta<-meta[order(meta$media),]
+#kable(meta,caption = "Table 1 : selection of media from Factiva database",row.names = FALSE)
+#x<-kable(meta,caption = "Table 1 : selection of media from Factiva database",row.names = FALSE, fomat="latex")
+
+```
+
+Of course, this sample does not pretend to be representative of world media at each period, but it is sufficiently robust to enhance a comparative approach. And it takes the risk to address publication in different languages without neglecting possible variations between countries located in “North” and “South”. The addition of press agencies is also interesting  for a better understanding of their potential effect on the selections made by journalists at each period of time.
+
+
+### Counting of news related to terror attacks of autumn 2001
+
+The definition of keywords or regular expression able to catch the news related to the attacks of Sept. 11 is not an easy tasks, especially considering the diversity of language used by the selected media. We have therefore introduced two keywords :
+
+- **terror** : the structural change in media agenda is characterized by the development of news related to terrorism, terrorists or terror attack. These news can be relatively easily catched in all selected languages by a simple regular expression using the root *terror-*.
+
+- **attack** : the specific events happening the 11 September in the USA are generally qualified by the term *attack* in english. But the situation is more confused in other languages where it is often necessary to use two words to cover the equivalent semantic field. An important problem in the majority of languages is the fact that the term attack is not only related to war and terrorism but also to sport, in particular when it comes to football or rugby. 
+
+```{r regexp1 ,include = TRUE, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+regexp<-read.table(file = "factiva_terror_2001_regexp.csv",
+         header=T,
+         sep=";",
+         encoding="UTF-8")
+#kable(regexp,caption = "Table 2 : Regular expression used for the recognition of terror attacks in news from 2001",escape = TRUE )
+```
+
+In our analysis, we have tested two possible definitions of the phenomenom of interest. The first one is based only on the tag <*terror*> and the second on the combination of <*terror* or *attack*>. The first one can be considered as a minimum measure of salience and the second as a maximum. But as we will demonstrate, it appears better to keep only <*terror*> because <*attack*> ^produce a lot of false positive, especially in english language.
+ 
+### Counting of news related to outbreak of 2020
+
+The definition of keywords or regular expression able to catch the news related to the pandemic crisis of 2020 is more easy because some keywords are easy to recognize in various langugaes. But we must be carefull as regard to the changing names of the pandemic. Basically, we use three keywords associated to regular expression :
+
+- **ncov-19** is related to the initial name of the outbreak and introduce few risk of confusions. We use the regular expression <ncov+> to catch it
+- **coronavirus** is the most frequent name used by media. But we have to be carefull with the different forms of abreviation. In the majority of language, the best solution is to use the regular expression <coronav+> in order to avoid confusion with the word corona related to a mark of beer or to crown in spanish or italian languages. But in the case of german, it is necessary to adopt <corona+> because it is the abbeviation used for the pandemic and the alternative terms are limited. 
+- **covid-19** is the official name which is more and more used in competition with coronavirus in the final period. Due to abbreviations, we use the regular expression <covid-> which does not inroduce risks of confusion in all languages used. Interestingly this word appears in latin alphabet and not in cyrillic when it is used in russian language.
+
+
+
+
+```{r regexp2 ,include = TRUE, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+regexp<-read.table(file = "factiva_covid_2020_regexp.csv",
+         header=T,
+         sep=";",
+         encoding="UTF-8")
+#kable(regexp,caption = "Table 3 : Regular expression used for the recognition of Covid-19 in news from 2020",escape = TRUE )
+```
+
+### Structure of data
+
+The data are store in "column" format, in order to make more easy the use of R packages like *tidyverse* or *data.table* for the statistical analysis and *ggplot2* or *plotly* for the visualisation.  The table is store in only 5 columns (Cf. table 1)
+
+```{r data ,include = TRUE, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+df<-read.table(file = "factiva_terror_2001_data.csv",
+         header=T,
+         sep=";",
+         encoding="UTF-8")
+df$start<-as.Date(df$start)
+df$end<-as.Date(df$end)
+df1<-df
+kable(head(df1,7),caption = "Table 1 : Structure of 2001 database")
+
+
+
+df<-read.table(file = "factiva_covid_2020_data.csv",
+         header=T,
+         sep=";",
+         encoding="UTF-8")
+df$start<-as.Date(df$start)
+df$end<-as.Date(df$end)
+df2<-df
+df2<-df2[is.na(df2$tot)==F,]
+kable(head(df2,7),caption = "Table 2 : Structure of 2020 database")
+
+```
+
+
+## Analysis
+
+
+### Evolution of the salience of the topics 
+
+
+#### Salience of "terror" in 2001
+
+```{r fig_terror}
+tab <-df1 %>% filter(tot>0) %>%
+          mutate(salience = 100*terror/tot) %>%
+          mutate(midweek = start+3) %>%
+          select(media, midweek, salience) 
+
+#plot_ly(tab, x = ~midweek, y = ~salience, color = ~media, type = "scatter", mode = "lines" ) 
+
+# Echelle arithmétique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of Sept.11 attacks in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_continuous(limits = c(0,100), breaks=c(0,10,20,30,40,50,60,70,80, 90,100), name= "% of news about terror-", minor_breaks=NULL )+
+   scale_x_date(limits = c(as.Date("2001-08-01"), as.Date("2001-12-31")), name = "2001")
+p<-p+theme_linedraw()+
+   geom_vline(xintercept = as.Date("2001-09-11"), colour="black",lty=2) +
+    geom_text(aes(x=as.Date("2001-09-10"),y=87, label="11/09", angle=90, vjust="left"), colour="black") +
+      geom_text(aes(x=as.Date("2001-11-15"),y=80, label="11/09: Attacks of WTC & Pentagon",  vjust="left"), colour="black")+
+  
+    geom_vline(xintercept = as.Date("2001-09-20"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2001-09-19"),y=87, label="20/09", angle=90, vjust="left"), colour="black") +
+    geom_text(aes(x=as.Date("2001-11-15"),y=90, label="20/09: Bush declares 'war on terrorism'",  vjust="left"), colour="black")
+  
+
+p
+ggsave("Fig_terror_2001.pdf", plot=p,width = 9, height = 6) 
+#ggsave("Fig_terror_2001.png", plot=p,width = 9, height = 6, dpi=300) 
+
+# Echelle logarithmique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of Sept.11 attacks in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_log10(limits = c(0.25,100), breaks=c(0.25,0.5,1,2,4,8,16,32,64, 100), name= "% of news about terror- (log. scale)", minor_breaks=NULL ) +
+   scale_x_date(limits = c(as.Date("2001-08-01"), as.Date("2001-12-31")), name = "2001")
+p<-p+theme_linedraw()+
+   geom_vline(xintercept = as.Date("2001-09-11"), colour="black",lty=2) +
+    geom_text(aes(x=as.Date("2001-09-10"),y=87, label="11/09", angle=90, vjust="left"), colour="black") +
+    geom_text(aes(x=as.Date("2001-11-15"),y=0.3, label="11/09: Attacks of WTC & Pentagon",  vjust="left"), colour="black")+
+  
+    geom_vline(xintercept = as.Date("2001-09-20"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2001-09-19"),y=87, label="20/09", angle=90, vjust="left"), colour="black") +
+  geom_text(aes(x=as.Date("2001-11-15"),y=0.6, label="20/09: Bush declares 'war on terrorism'",  vjust="left"), colour="black")
+p
+ggsave("Fig_terror_2001_log.pdf", plot=p,width = 9, height = 6) 
+#ggsave("Fig_terror_2001_log.png", plot=p,width = 9, height = 6, dpi=300) 
+
+```
+
+The minimal definition of the phenomenom reveals low but heterogeneous level of salience of the topic until the shock of Sept.11 but with an important diversity in relative terms, with salience levels comprise between 1 and 8%. 
+
+Immediately after the schock the levels are comprised between 10 and 80%  which means a multiplication by 10 in average. But the increase is not homogeneous and imlportant changes are observed in the ranking of media's interest for the topic of terror. The most important variation is observed for *USA Today* where 1.9% of news was related to terror the 4-10 septembre but reached 64.6% the 11-17 septembre and even 72.5% the 18-24 septembre. The *New York Times* is more representative of the average trend with a jump from 1.5%  to 22.4% between the 4-10 september and the 18-24 septembre. The minimum jump is observed for the *New Straits Times* from Indonesia where the topic move from less than 1% before the attack to a maximum of 11% during the weeks following the attack, but with a relatively flat profile. 
+
+The peak of salience is generally localized not immediately after the events (11-17 septembre) but rather during the following week (18-24 septembre) in relation with the research of explanation and the declaration of Georges W. Bush about the *war on terrorism* the 16 september followed the adress to the congress of 20 september where de declared that *[Our] war on terror begins with al Qaeda, but it does not end there.* (Bush, 2001, https://georgewbush-whitehouse.archives.gov/news/releases/2001/09/20010920-8.html)
+
+After this peak, all the curves starts generally to decline at less until the beginning of december where some of the curves start to increase in relation with the beginning of the war in Iraq or the development of new terror attacks by Al Qaeda. 
+
+
+#### salience of "terror or attack" in 2001
+
+We have checked an alternative solution where the keywords <*terror+*> and <*attack+*> are both included.
+
+
+```{r fig_terror_attack}
+tab <-df1 %>% filter(tot>0) %>%
+          mutate(salience = 100*terror_attack/tot) %>%
+          mutate(midweek = start+3) %>%
+          select(media, midweek, salience) 
+
+#plot_ly(tab, x = ~midweek, y = ~salience, color = ~media, type = "scatter", mode = "lines" ) 
+
+# Echelle arithmétique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of Sept.11 attacks in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_continuous(limits = c(0,100), breaks=c(0,10,20,30,40,50,60,70,80, 90, 100), name= "% of news about terror-", minor_breaks=NULL )+
+ scale_x_date(limits = c(as.Date("2001-08-01"), as.Date("2001-12-31")), name = "2001")
+p<-p+theme_linedraw()
+
+
+
+p
+ggsave("Fig_terror_attack_2001.pdf", plot=p,width = 9, height = 6) 
+
+
+# Echelle logarithmique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of Sept.11 attacks in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_log10(limits = c(0.25,100), breaks=c(0.25,0.5,1,2,4,8,16,32,64, 100), name= "% of news about terror- (log. scale)", minor_breaks=NULL ) +
+   scale_x_date(limits = c(as.Date("2001-08-01"), as.Date("2001-12-31")), name = "2001")
+p<-p+theme_linedraw()
+p
+ggsave("Fig_terror_attack_2001_log.pdf", plot=p,width = 9, height = 6) 
+
+
+```
+
+The addition of the keywords related to 'attack or terror' does not really modify the conclusion but reduce the importance of the jump because of the existence of a permanent set of news related to attack in sport news which create confusion with the topic of interest (false positive). We decide therefore to limit the analysis of the crisis to the single keyword 'terror' which is more coherent with the hypothesis of the analysis and provide a better view of the discursive shift in international policy.
+
+
+
+#### Salience of "ncov-corona-covid" in 2020
+
+
+```{r}
+tab <-df2 %>% filter(tot>0) %>%
+          mutate(salience = 100*covid/tot) %>%
+          mutate(midweek = start+3) %>%
+          select(media, midweek, salience) 
+
+#plot_ly(tab, x = ~midweek, y = ~salience, color = ~media, type = "scatter", mode = "lines" ) 
+
+# Echelle arithmétique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of covid outbreak in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_continuous(limits = c(0,100), breaks=c(0,10,20,30,40,50,60,70,80,90,100), name= "% of news with corona/covid ", minor_breaks=NULL ) +
+  scale_x_date(limits = c(as.Date("2020-01-01"), as.Date("2020-05-31")), name = "2020")
+p<-p+theme_linedraw()+
+   geom_vline(xintercept = as.Date("2020-01-13"), colour="black",lty=2) +
+    geom_text(aes(x=as.Date("2020-01-12"),y=87, label="13/01", angle=90, vjust="left"), colour="black") +
+    geom_text(aes(x=as.Date("2020-04-20"),y=25, label="15/01: fist case outside of China",  vjust="left"), colour="black")+
+ 
+    geom_vline(xintercept = as.Date("2020-01-30"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2020-01-29"),y=87, label="30/01", angle=90, vjust="left"), colour="black") +
+     geom_text(aes(x=as.Date("2020-04-20"),y=15, label="30/01: WHO declares emergency", vjust="left"), colour="black")+
+ 
+    geom_vline(xintercept = as.Date("2020-03-11"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2020-03-10"),y=87, label="11/03", angle=90, vjust="left"), colour="black") +
+   geom_text(aes(x=as.Date("2020-04-20"), y=5, label="11/03: WHO declares pandemic ", vjust="left"), colour="black")
+  
+p
+ggsave("Fig_covid_2020.pdf", plot=p,width = 9, height = 6) 
+#ggsave("Fig_covid_2020.png", plot=p,width = 9, height = 6, dpi=300) 
+
+# Echelle logarithmique
+p<-ggplot(tab, aes(x=midweek, y=salience, color = media)) + 
+  geom_line()+
+#  ggtitle(label = "The coverage of covid outbreak in selected newspapers and press agencies",subtitle = "Source : Factiva") +
+  scale_y_log10(limits = c(0.25,100), breaks=c(0.25,0.5,1,2,4,8,16,32,64, 100), name= "% of news with corona/covid (log. scale)", minor_breaks=NULL )+
+  scale_x_date(limits = c(as.Date("2020-01-01"), as.Date("2020-05-31")), name = "2020")
+p<-p+theme_linedraw()+
+   geom_vline(xintercept = as.Date("2020-01-13"), colour="black",lty=2) +
+    geom_text(aes(x=as.Date("2020-01-12"),y=87, label="13/01", angle=90, vjust="left"), colour="black") +
+    geom_text(aes(x=as.Date("2020-04-20"),y=1.2, label="13/01: fist case outside of China",  vjust="left"), colour="black")+
+  
+    geom_vline(xintercept = as.Date("2020-01-30"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2020-01-29"),y=87, label="30/01", angle=90, vjust="left"), colour="black") +
+    geom_text(aes(x=as.Date("2020-04-20"),y=0.6, label="30/01: WHO declares emergency", vjust="left"), colour="black")+
+  
+  
+    geom_vline(xintercept = as.Date("2020-03-11"), colour="black", lty=2) +
+    geom_text(aes(x=as.Date("2020-03-10"),y=87, label="11/03", angle=90, vjust="left"), colour="black") +
+     geom_text(aes(x=as.Date("2020-04-20"),y=0.3, label="11/03: WHO declares pandemic ",  vjust="left"), colour="black")
+  
+p
+ggsave("Fig_covid_2020_log.pdf", plot=p,width = 9, height = 6) 
+#ggsave("Fig_covid_2020_log.png", plot=p,width = 9, height = 6, dpi=300) 
+
+```
+
+
+The definition of the starting point of the Covid-19 crisis is not so obvious as in the case of the terror attacks of Sept. 2001. According to the timeline provided by WHO, the first Disease Outbreak News on the new virus was published the 5th January. But the outbreak was only identified by a name when China publicly shared the genetic sequence of COVID-19 on 12th January. But it is only the 13th January with the confirmation in Thailand of first recorded case outside of China that the outbreak became international. The two other vertical lines are related to the official declarations of WHO that has defined COVID-19 as emergency (30th January) and Pandemic (11th March)
+
+
+
+
+
