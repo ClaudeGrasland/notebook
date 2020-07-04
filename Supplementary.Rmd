@@ -4,10 +4,10 @@ title: Historical focusing events in perspective - The impact of 2001 terror att
 author: "<Anonymized>"
 date: "01/07/2020"
 output:
-  word_document: default
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
+  word_document: default
 subtitle: Supplementary Material
 ---
 
